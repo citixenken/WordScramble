@@ -8,52 +8,52 @@
 import SwiftUI
 
 struct ContentView: View {
-    let series = ["The Wire", "WestWorld", "Mr. Robot", "Billions", "Game Of Thrones"]
+    @State private var usedWords: [String] = []
+    @State private var rootWord = ""
+    @State private var newWord = ""
     
     var body: some View {
-        //        List {
-        //            Section("Section 1") {
-        //                Text("Static row 1")
-        //                Text("Static row 2")
-        //            }
-        //
-        //            Section("Section 2") {
-        //                ForEach(0..<5) {
-        //                    Text("Dynamic row \($0)")
-        //                }
-        //            }
-        //
-        //            Section("Section 3") {
-        //                Text("Static row 3")
-        //                Text("Static row 4")
-        //            }
-        //
-        //
-        //        }
-        //        .listStyle(.grouped)
-        
-        //        List(0..<7) {
-        //            Text("Number: \($0)")
-        //        }
-        
-        List {
-            Text("A Static Row")
-            
-            Spacer()
-            
-            ForEach(series, id: \.self) {
-                Text($0)
+        NavigationView {
+            List {
+                Section {
+                    TextField("Enter your word", text: $newWord)
+                        .autocapitalization(.none)
+                }
+                
+                Section {
+                    ForEach(usedWords, id: \.self) { word in
+                        HStack {
+                            Image(systemName: "\(word.count).circle.fill")
+                            Text(word)
+                        }
+                    }
+                }
             }
-            
-            Spacer()
-            
-            Text("Another Static Row")
+            .navigationTitle("rootWord")
+            .onSubmit(addNewWord)
+     }
+    }
+    
+    func addNewWord() {
+        //lowercase and trim the word; to avoid duplicates
+        let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        //exit if remaining string is empty
+        guard answer.count > 0 else { return }
+        
+        //more validation here
+        
+        //animation
+        withAnimation {
+            usedWords.insert(answer, at: 0)
         }
+        
+        newWord = ""
     }
 }
     
-    struct ContentView_Previews: PreviewProvider {
-        static var previews: some View {
-            ContentView()
-        }
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
     }
+}
