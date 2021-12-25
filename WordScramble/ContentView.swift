@@ -29,9 +29,11 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("rootWord")
+            .navigationTitle(rootWord)
             .onSubmit(addNewWord)
-     }
+            .onAppear(perform: startGame)
+        }
+
     }
     
     func addNewWord() {
@@ -50,8 +52,30 @@ struct ContentView: View {
         
         newWord = ""
     }
-}
     
+    func startGame() {
+        // 1. Find the url for start.txt in our app bundle
+        if let startWordsURL = Bundle.main.url(forResource: "start", withExtension: "txt") {
+            
+            //2. Load start.txt into a string
+            if let startWords = try? String(contentsOf: startWordsURL) {
+                
+                //3. Split the string into an array of string, using line breaks
+                let allWords = startWords.components(separatedBy: "\n")
+                
+                //4. Pick a random word, or use "paternal" as default
+                rootWord = allWords.randomElement() ?? "paternal"
+                
+                //if we're here, it means everything has worked, so exit
+                return
+            }
+        }
+        
+        //if we're here, then there is a problem - trigger crash and report error
+        fatalError("Could not load start.txt from bundle.")
+    }
+}
+
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
