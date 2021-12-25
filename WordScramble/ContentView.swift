@@ -16,12 +16,17 @@ struct ContentView: View {
     @State private var errorMessage = ""
     @State private var showingError = false
     
+    @State private var score = 0
+//    @State private var scoreTitle = ""
+//    @State private var showingScore = false
+    
     var body: some View {
         NavigationView {
             List {
                 Section {
                     TextField("Enter your word", text: $newWord)
                         .autocapitalization(.none)
+                        .disableAutocorrection(true)
                 }
                 
                 Section {
@@ -32,6 +37,11 @@ struct ContentView: View {
                         }
                     }
                 }
+                Section {
+                    Text("Total score is: \(score)")
+                        //.foregroundColor(.white)
+                        .font(.title.weight(.medium))
+                }
             }
             .navigationTitle(rootWord)
             .onSubmit(addNewWord)
@@ -41,6 +51,10 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage)
             }
+            .toolbar {
+                Button("Restart", action: reset)
+                    .font(.title2)
+            }
         }
 
     }
@@ -49,21 +63,33 @@ struct ContentView: View {
         //lowercase and trim the word; to avoid duplicates
         let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
+        //Challenge #1
+        guard answer != rootWord else {
+            wordError(title: "Cannot use '\(rootWord)' as a start word", message: "Try again!")
+            score -= 1
+            return
+        }
         //exit if remaining string is empty
-        guard answer.count > 0 else { return }
+        guard answer.count > 2 else {
+            wordError(title: "Word is too short", message: "Try a longer word")
+            score -= 1
+            return }
         
         guard isOriginal(word: answer) else {
             wordError(title: "Word has already been used!", message: "Get creative")
+            score -= 1
             return
         }
         
         guard isPossible(word: answer) else {
             wordError(title: "Word not possible!", message: "It's impossible to spell that word from '\(rootWord.uppercased())'")
+            score -= 1
             return
         }
         
         guard isReal(word: answer) else {
             wordError(title: "Word not recognized!", message: "This isn't an English word")
+            score -= 1
             return
         }
         
@@ -72,6 +98,13 @@ struct ContentView: View {
             usedWords.insert(answer, at: 0)
         }
         
+        if answer.count >= 5 {
+            score += 3
+        } else if answer.count == 4 {
+            score += 2
+        } else {
+            score += 1
+        }
         newWord = ""
     }
     
@@ -130,6 +163,13 @@ struct ContentView: View {
         errorTitle = title
         errorMessage = message
         showingError = true
+    }
+    
+    //Challenge
+    func reset() {
+        usedWords = [String]()
+        score = 0
+        startGame()
     }
     
 }
