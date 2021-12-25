@@ -12,6 +12,10 @@ struct ContentView: View {
     @State private var rootWord = ""
     @State private var newWord = ""
     
+    @State private var errorTitle = ""
+    @State private var errorMessage = ""
+    @State private var showingError = false
+    
     var body: some View {
         NavigationView {
             List {
@@ -32,6 +36,11 @@ struct ContentView: View {
             .navigationTitle(rootWord)
             .onSubmit(addNewWord)
             .onAppear(perform: startGame)
+            .alert(errorTitle, isPresented: $showingError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
         }
 
     }
@@ -43,7 +52,20 @@ struct ContentView: View {
         //exit if remaining string is empty
         guard answer.count > 0 else { return }
         
-        //more validation here
+        guard isOriginal(word: answer) else {
+            wordError(title: "Word has already been used!", message: "Get creative")
+            return
+        }
+        
+        guard isPossible(word: answer) else {
+            wordError(title: "Word not possible!", message: "It's impossible to spell that word from '\(rootWord.uppercased())'")
+            return
+        }
+        
+        guard isReal(word: answer) else {
+            wordError(title: "Word not recognized!", message: "This isn't an English word")
+            return
+        }
         
         //animation
         withAnimation {
@@ -74,6 +96,42 @@ struct ContentView: View {
         //if we're here, then there is a problem - trigger crash and report error
         fatalError("Could not load start.txt from bundle.")
     }
+    
+    //Is the word original? Hasn't been used already...
+    func isOriginal(word: String) -> Bool {
+        !usedWords.contains(word)
+    }
+    
+    //Is the word possible?
+    func isPossible(word: String) -> Bool {
+        var tempWord = rootWord
+        
+        for letter in word {
+            if let pos = tempWord.firstIndex(of: letter) {
+                tempWord.remove(at: pos)
+            } else {
+                return false
+            }
+            
+        }
+        return true
+    }
+    
+    //Is the word an actual English word?
+    func isReal(word: String) -> Bool {
+        let checker = UITextChecker()
+        let range = NSRange(location: 0, length: word.utf16.count)
+        let misspelledRange = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
+        
+        return misspelledRange.location == NSNotFound //meaning its a valid English word
+    }
+    
+    func wordError(title: String, message: String) {
+        errorTitle = title
+        errorMessage = message
+        showingError = true
+    }
+    
 }
 
 struct ContentView_Previews: PreviewProvider {
